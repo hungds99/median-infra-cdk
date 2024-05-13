@@ -90,12 +90,12 @@ export class AlbStack extends Stack {
     });
     ec2SG.addIngressRule(albSG, Port.tcp(80), 'Allow HTTP traffic from ALB');
 
-    const bastionHostSG = SecurityGroup.fromSecurityGroupId(
-      this,
-      'MedianBastionHostSG',
-      'sg-0d6ac69c780c704ef',
-    );
-    ec2SG.addIngressRule(bastionHostSG, Port.tcp(22), 'Allow SSH traffic from Bastion Host');
+    // const bastionHostSG = SecurityGroup.fromSecurityGroupId(
+    //   this,
+    //   'MedianBastionHostSG',
+    //   'sg-0d6ac69c780c704ef',
+    // );
+    // ec2SG.addIngressRule(bastionHostSG, Port.tcp(22), 'Allow SSH traffic from Bastion Host');
 
     // Get KeyPair
     const ec2KeyPair = KeyPair.fromKeyPairName(this, 'MedianKeyPair', 'median-key-pair');
@@ -114,7 +114,7 @@ export class AlbStack extends Stack {
       launchTemplateName: 'MedianEC2LaunchTemplate',
       machineImage: MachineImage.genericLinux(
         {
-          'ap-southeast-1': 'ami-0fb13eee4862ee6d4',
+          'ap-southeast-1': 'ami-02dcd6051cdd9671b',
         },
         {
           userData: ec2UserData,

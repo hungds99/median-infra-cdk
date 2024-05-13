@@ -19,13 +19,13 @@ new AlbStack(app, 'MedianAlbStack', {
 });
 
 // Create the RDS stack
-new RdsStack(app, 'MedianRdsStack', {
-  description: 'Median RDS Stack',
-  vpc: vpcStack.vpc,
-});
+// new RdsStack(app, 'MedianRdsStack', {
+//   description: 'Median RDS Stack',
+//   vpc: vpcStack.vpc,
+// });
 
 // Create the Bastion Host stack
-new BastionHostStack(app, 'MedianBastionHostStack', {
-  description: 'Median Bastion Host Stack',
-  vpc: vpcStack.vpc,
-});
+// new BastionHostStack(app, 'MedianBastionHostStack', {
+//   description: 'Median Bastion Host Stack',
+//   vpc: vpcStack.vpc,
+// });
