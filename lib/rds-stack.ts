@@ -12,12 +12,23 @@ export class RdsStack extends Stack {
     super(scope, id, props);
 
     // Create a postgres RDS instance security group
-    const eec2SG = SecurityGroup.fromSecurityGroupId(this, 'MedianEC2SG', 'sg-0e5b7aaaf262950c6');
+    const ec2SG = SecurityGroup.fromSecurityGroupId(this, 'MedianEC2SG', 'sg-0e5b7aaaf262950c6');
+    const bastionHostSG = SecurityGroup.fromSecurityGroupId(
+      this,
+      'MedianBastionHostSG',
+      'sg-0d6ac69c780c704ef',
+    );
+
     const postgresSG = new SecurityGroup(this, 'MedianPostgresSG', {
       vpc: props.vpc,
       securityGroupName: 'MedianPostgresSG',
     });
-    postgresSG.addIngressRule(eec2SG, Port.tcp(5432), 'Allow EC2 to connect to RDS');
+    postgresSG.addIngressRule(ec2SG, Port.tcp(5432), 'Allow EC2 to connect to RDS');
+    postgresSG.addIngressRule(
+      bastionHostSG,
+      Port.tcp(5432),
+      'Allow Bastion Host to connect to RDS',
+    );
 
     // Create a postgres RDS instance
     const postgresInstance = new DatabaseInstance(this, 'MedianPostgresRDS', {
