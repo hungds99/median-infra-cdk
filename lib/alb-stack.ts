@@ -16,7 +16,9 @@ import {
   ApplicationLoadBalancer,
   ApplicationProtocol,
   ApplicationTargetGroup,
+  ListenerAction,
   ListenerCertificate,
+  ListenerCondition,
   TargetType,
 } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
@@ -56,9 +58,16 @@ export class AlbStack extends Stack {
     const albHttpListener = alb.addListener('MedianALBListener', {
       port: 80,
       protocol: ApplicationProtocol.HTTP,
+      defaultTargetGroups: [targetGroup],
     });
-    albHttpListener.addTargetGroups('AddTargetGroup', {
-      targetGroups: [targetGroup],
+    albHttpListener.addAction('MedianALBHttpListenerRule', {
+      priority: 1,
+      conditions: [ListenerCondition.pathPatterns(['*'])],
+      action: ListenerAction.redirect({
+        protocol: 'HTTPS',
+        port: '443',
+        permanent: true,
+      }),
     });
 
     const httpsListenerCertificate = ListenerCertificate.fromArn(
