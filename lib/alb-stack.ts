@@ -114,16 +114,15 @@ export class AlbStack extends Stack {
       roleName: 'MedianEC2InstanceProfile',
       assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
       description: 'Median Role for EC2 instances',
-      managedPolicies: [],
-    });
-    ec2Role.addManagedPolicy({
-      managedPolicyArn: 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
-    });
-    ec2Role.addManagedPolicy({
-      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy',
-    });
-    ec2Role.addManagedPolicy({
-      managedPolicyArn: 'arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess',
+      managedPolicies: [
+        {
+          managedPolicyArn: 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
+        },
+        {
+          managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy',
+        },
+        { managedPolicyArn: 'arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess' },
+      ],
     });
 
     const ec2InstanceProfile = new InstanceProfile(this, 'MedianEC2InstanceProfile', {
