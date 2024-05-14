@@ -21,6 +21,7 @@ import {
   ListenerCondition,
   TargetType,
 } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import { InstanceProfile, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
 type AlbStackProps = StackProps & {
@@ -109,6 +110,27 @@ export class AlbStack extends Stack {
       'pm2 start dist/src/main.js --watch',
     );
 
+    const ec2Role = new Role(this, 'MedianEC2Role', {
+      roleName: 'MedianEC2InstanceProfile',
+      assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
+      description: 'Median Role for EC2 instances',
+      managedPolicies: [],
+    });
+    ec2Role.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore',
+    });
+    ec2Role.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy',
+    });
+    ec2Role.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess',
+    });
+
+    const ec2InstanceProfile = new InstanceProfile(this, 'MedianEC2InstanceProfile', {
+      instanceProfileName: 'MedianEC2InstanceProfile',
+      role: ec2Role,
+    });
+
     // EC2 launch template
     const ec2LaunchTemplate = new LaunchTemplate(this, 'MedianEC2LaunchTemplate', {
       launchTemplateName: 'MedianEC2LaunchTemplate',
@@ -123,6 +145,7 @@ export class AlbStack extends Stack {
       instanceType: new InstanceType('t2.micro'),
       keyPair: ec2KeyPair,
       securityGroup: ec2SG,
+      instanceProfile: ec2InstanceProfile,
     });
 
     // Create a Auto Scaling group
