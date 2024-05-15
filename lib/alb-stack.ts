@@ -173,14 +173,13 @@ export class AlbStack extends Stack {
     });
     this.autoscalingGroup.attachToApplicationTargetGroup(this.applicationTargetGroup);
 
-    ec2Role.addToPolicy(
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ['autoscaling:CompleteLifecycleAction'],
-        resources: [this.autoscalingGroup.autoScalingGroupArn],
-        principals: [new ServicePrincipal('ec2.amazonaws.com')],
-      }),
-    );
+    // ec2Role.addToPolicy(
+    //   new PolicyStatement({
+    //     effect: Effect.ALLOW,
+    //     actions: ['autoscaling:CompleteLifecycleAction'],
+    //     resources: [this.autoscalingGroup.autoScalingGroupArn],
+    //   }),
+    // );
 
     // Output the Alb DNS name
     new CfnOutput(this, 'MedianALBDNSName', {
