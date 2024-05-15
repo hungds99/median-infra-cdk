@@ -21,7 +21,13 @@ import {
   ListenerCondition,
   TargetType,
 } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import { InstanceProfile, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import {
+  Effect,
+  InstanceProfile,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
 type AlbStackProps = StackProps & {
@@ -112,6 +118,10 @@ export class AlbStack extends Stack {
       'systemctl enable nginx',
       'cd /usr/src/app/median-backend-rest-api',
       'pm2 start dist/src/main.js --watch',
+      // 'sleep 30',
+      // 'TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`',
+      // 'INSTANCE_ID=`curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id`',
+      // 'aws autoscaling complete-lifecycle-action --lifecycle-action-result CONTINUE --instance-id $INSTANCE_ID --lifecycle-hook-name median-lifecycle-hook --auto-scaling-group-name MedianASG --region ap-southeast-1',
     );
 
     const ec2Role = new Role(this, 'MedianEC2Role', {
@@ -162,6 +172,15 @@ export class AlbStack extends Stack {
       vpcSubnets: { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
     });
     this.autoscalingGroup.attachToApplicationTargetGroup(this.applicationTargetGroup);
+
+    ec2Role.addToPolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ['autoscaling:CompleteLifecycleAction'],
+        resources: [this.autoscalingGroup.autoScalingGroupArn],
+        principals: [new ServicePrincipal('ec2.amazonaws.com')],
+      }),
+    );
 
     // Output the Alb DNS name
     new CfnOutput(this, 'MedianALBDNSName', {
