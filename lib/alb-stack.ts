@@ -29,6 +29,10 @@ type AlbStackProps = StackProps & {
 };
 
 export class AlbStack extends Stack {
+  autoscalingGroup: AutoScalingGroup;
+  applicationLoadBalancer: ApplicationLoadBalancer;
+  applicationTargetGroup: ApplicationTargetGroup;
+
   constructor(scope: Construct, id: string, props: AlbStackProps) {
     super(scope, id, props);
 
@@ -41,7 +45,7 @@ export class AlbStack extends Stack {
     albSG.addIngressRule(Peer.anyIpv4(), Port.tcp(443), 'Allow HTTPS traffic');
 
     // Create a target group
-    const targetGroup = new ApplicationTargetGroup(this, 'MedianTargetGroup', {
+    this.applicationTargetGroup = new ApplicationTargetGroup(this, 'MedianTargetGroup', {
       targetGroupName: 'MedianTargetGroup',
       port: 80,
       protocol: ApplicationProtocol.HTTP,
@@ -50,16 +54,16 @@ export class AlbStack extends Stack {
     });
 
     // Create an Alb
-    const alb = new ApplicationLoadBalancer(this, 'MedianALB', {
+    this.applicationLoadBalancer = new ApplicationLoadBalancer(this, 'MedianALB', {
       loadBalancerName: 'MedianALB',
       vpc: props.vpc,
       internetFacing: true,
       securityGroup: albSG,
     });
-    const albHttpListener = alb.addListener('MedianALBListener', {
+    const albHttpListener = this.applicationLoadBalancer.addListener('MedianALBListener', {
       port: 80,
       protocol: ApplicationProtocol.HTTP,
-      defaultTargetGroups: [targetGroup],
+      defaultTargetGroups: [this.applicationTargetGroup],
     });
     albHttpListener.addAction('MedianALBHttpListenerRule', {
       priority: 1,
@@ -74,13 +78,13 @@ export class AlbStack extends Stack {
     const httpsListenerCertificate = ListenerCertificate.fromArn(
       'arn:aws:acm:ap-southeast-1:046397301718:certificate/d006d91a-71d5-4940-8fcf-816674b88903',
     );
-    const albHttpsListener = alb.addListener('MedianALBListenerHTTPS', {
+    const albHttpsListener = this.applicationLoadBalancer.addListener('MedianALBListenerHTTPS', {
       port: 443,
       protocol: ApplicationProtocol.HTTPS,
       certificates: [httpsListenerCertificate],
     });
     albHttpsListener.addTargetGroups('AddTargetGroup', {
-      targetGroups: [targetGroup],
+      targetGroups: [this.applicationTargetGroup],
     });
 
     // EC2 security group
@@ -148,7 +152,7 @@ export class AlbStack extends Stack {
     });
 
     // Create a Auto Scaling group
-    const asg = new AutoScalingGroup(this, 'MedianASG', {
+    this.autoscalingGroup = new AutoScalingGroup(this, 'MedianASG', {
       autoScalingGroupName: 'MedianASG',
       vpc: props.vpc,
       minCapacity: 1,
@@ -157,13 +161,13 @@ export class AlbStack extends Stack {
       launchTemplate: ec2LaunchTemplate,
       vpcSubnets: { subnetType: SubnetType.PRIVATE_WITH_EGRESS },
     });
-    asg.attachToApplicationTargetGroup(targetGroup);
+    this.autoscalingGroup.attachToApplicationTargetGroup(this.applicationTargetGroup);
 
     // Output the Alb DNS name
     new CfnOutput(this, 'MedianALBDNSName', {
       key: 'MedianALBDNSName',
       exportName: 'MedianALBDNSName',
-      value: alb.loadBalancerDnsName,
+      value: this.applicationLoadBalancer.loadBalancerDnsName,
     });
     new CfnOutput(this, 'MedianEC2TemplateVersion', {
       key: 'MedianEC2TemplateVersion',
